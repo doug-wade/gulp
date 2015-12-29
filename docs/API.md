@@ -8,9 +8,9 @@ Jump to:
 
 ### gulp.src(globs[, options])
 
-Emits files matching provided glob or an array of globs. 
-Returns a [stream](http://nodejs.org/api/stream.html) of [Vinyl files](https://github.com/wearefractal/vinyl-fs) 
-that can be [piped](http://nodejs.org/api/stream.html#stream_readable_pipe_destination_options) 
+Emits files matching provided glob or an array of globs.
+Returns a [stream](http://nodejs.org/api/stream.html) of [Vinyl files](https://github.com/wearefractal/vinyl-fs)
+that can be [piped](http://nodejs.org/api/stream.html#stream_readable_pipe_destination_options)
 to plugins.
 
 ```javascript
@@ -25,6 +25,8 @@ Type: `String` or `Array`
 
 Glob or array of globs to read. Globs use [node-glob syntax] except that negation is fully supported.
 
+Globbing is provided by [glob-stream](https://github.com/gulpjs/glob-stream) module. Please report any file watching problems directly to its [issue tracker](https://github.com/gulpjs/glob-stream/issues).
+
 A glob that begins with `!` excludes matching files from the glob results up to that point. For example, consider this directory structure:
 
     client/
@@ -35,26 +37,28 @@ A glob that begins with `!` excludes matching files from the glob results up to 
 The following expression matches `a.js` and `bad.js`:
 
     gulp.src(['client/*.js', '!client/b*.js', 'client/bad.js'])
-    
+
+You can pass any combination of globs. One caveat is that you can not only pass a glob negation, you must give it at least one positive glob so it knows where to start. All given must match for the file to be returned.
+
+Globs are executed in order, so negations should follow positive globs. For example:
+
+    gulp.src(['!b*.js', '*.js'])
+
+would not exclude any files, but this would
+
+    gulp.src(['*.js', '!b*.js'])
+
 
 #### options
 Type: `Object`
 
-Options to pass to [node-glob] through [glob-stream].
 
-gulp supports all [options supported by node-glob][node-glob documentation] and [glob-stream] except `ignore` and adds the following options.
+#### options.allowEmpty
+Type:  `Boolean`
+Default: false
 
-##### options.buffer
-Type: `Boolean`
-Default: `true`
+If true, won't emit an error when a glob pointing at a single file fails to match
 
-Setting this to `false` will return `file.contents` as a stream and not buffer files. This is useful when working with large files. **Note:** Plugins might not implement support for streams.
-
-##### options.read
-Type: `Boolean`
-Default: `true`
-
-Setting this to `false` will return `file.contents` as null and not read the file at all.
 
 ##### options.base
 Type: `String`
@@ -72,6 +76,157 @@ gulp.src('client/js/**/*.js', { base: 'client' })
   .pipe(gulp.dest('build'));  // Writes 'build/js/somedir/somefile.js'
 ```
 
+
+##### options.cwd
+Type:  `String`
+Default: process.cwd()
+
+The current working directory in which to search.
+
+
+##### options.cwdbase
+Type: `Boolean`
+Default: `false`
+
+When true it is the same as saying opt.base = opt.cwd
+
+
+##### options.debug
+Type: `Boolean`
+Default: `false`
+
+Set to enable debug logging.
+
+
+##### options.dot
+Type: `Boolean`
+Default: `false`
+
+Include .dot files in normal matches and globstar matches. Note that an explicit dot in a portion of the pattern will always match dot files.
+
+
+##### options.follow
+Type: `Boolean`
+Default: `false`
+
+Follow symlinked directories when expanding ** patterns. Note that this can result in a lot of duplicate references in the presence of cyclic links.
+
+
+##### options.mark
+Type: `Boolean`
+Default: `false`
+
+Add a / character to directory matches. Note that this requires additional stat calls.
+
+
+##### options.matchBase
+Type: `Boolean`
+Default: `false`
+
+Perform a basename-only match if the pattern does not contain any slash characters. That is, *.js would be treated as equivalent to **/*.js, matching all js files in all directories.
+
+
+##### options.nobrace
+Type: `Boolean`
+Default: `false`
+
+Do not expand {a,b} and {1..3} brace sets.
+
+
+##### options.nodir
+Type: `Boolean`
+Default: `false`
+
+Do not match directories, only files. (Note: to match only directories, simply put a / at the end of the pattern.)
+ignore Add a pattern or an array of glob patterns to exclude matches. Note: ignore patterns are always in dot:true mode, regardless of any other settings.
+
+
+##### options.noglobstar
+Type: `Boolean`
+Default: `false`
+
+Do not match ** against multiple filenames. (i.e., treat it as a normal * instead.)
+
+
+##### options.noext
+Type: `Boolean`
+Default: `false`
+
+Do not match +(a|b) "extglob" patterns.
+
+
+##### options.nocase
+Type: `Boolean`
+Default: `false`
+
+Perform a case-insensitive match. Note: on case-insensitive filesystems, non-magic patterns will match by default, since stat and readdir will not raise errors.
+
+
+##### options.nomount
+Type: `Boolean`
+Default: `false`
+
+By default, a pattern starting with a forward-slash will be "mounted" onto the root setting, so that a valid filesystem path is returned. Set this flag to disable that behavior.
+
+
+##### options.nonull
+Type: `Boolean`
+Default: `true`
+
+Set to never return an empty set, instead returning a set containing the pattern itself.
+
+
+##### options.nosort
+Type: `Boolean`
+Default: `false`
+
+Don't sort the results.
+
+
+##### options.read
+Type: `Boolean`
+Default: `true`
+
+Setting this to `false` will return `file.contents` as null and not read the file at all.
+
+
+##### options.realpath
+Type: `Boolean`
+Default: `false`
+
+Set to true to call fs.realpath on all of the results. In the case of a symlink that cannot be resolved, the full absolute path to the matched entry is returned (though it will usually be a broken symlink)
+
+
+##### options.root
+Type: `String`
+Default: path.resolve(options.cwd, "/") (/ on Unix systems, and C:\ or some such on Windows.)
+
+The place where patterns starting with / will be mounted onto.
+
+
+##### options.silent
+Type: `Boolean`
+Default: `false`
+
+When an unusual error is encountered when attempting to read a directory, a warning will be printed to stderr. Set the silent option to true to suppress these warnings.
+
+
+##### options.stat
+Type: `Boolean`
+Default: `false`
+
+Set to true to stat all results. This reduces performance somewhat, and is completely unnecessary, unless readdir is presumed to be an untrustworthy indicator of file existence.
+
+
+##### options.strict
+Type: `Boolean`
+Default: `false`
+
+When an unusual error is encountered when attempting to read a directory, the process will just continue on in search of other matches. Set the strict option to raise an error in these cases.
+
+
+The full set of options is available on [glob-stream](https://github.com/gulpjs/glob-stream).
+
 ### gulp.dest(path[, options])
 
 Can be piped to and it will write files. Re-emits all data passed to it so you can pipe to multiple folders.  Folders that don't exist will be created.
@@ -85,7 +240,7 @@ gulp.src('./client/templates/*.jade')
 ```
 
 The write path is calculated by appending the file relative path to the given
-destination directory. In turn, relative paths are calculated against the file base. 
+destination directory. In turn, relative paths are calculated against the file base.
 See `gulp.src` above for more info.
 
 #### path
@@ -156,7 +311,7 @@ gulp.task('buildStuff', function() {
   .pipe(somePlugin())
   .pipe(someOtherPlugin())
   .pipe(gulp.dest(/*some destination*/));
-  
+
   return stream;
   });
 ```
